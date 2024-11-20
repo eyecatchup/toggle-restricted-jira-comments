@@ -10,15 +10,15 @@ This browser extension adds a button to the activity feed of every issue page in
 
 This allows to share your screen without sharing restricted / sensitive information.
 
-# Installation
+## Installation
 
 - Chrome / Edge: In review
 - Firefox: https://addons.mozilla.org/de/firefox/addon/toggle-restricted-jira-comment/
 
-# Live demo
+## Live demo
 
 <img src="./toggle-comments-short.gif" />
 
-# License
+## License
 
 MIT, http://eyecatchup.mit-license.org
