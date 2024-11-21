@@ -12,7 +12,7 @@ This allows to share your screen without sharing restricted / sensitive informat
 
 ## Installation
 
-- Chrome / Edge: In review
+- Chrome / Edge: https://chromewebstore.google.com/detail/ppocpjefgkoemoopldkdehglkcmfjocj 
 - Firefox: https://addons.mozilla.org/de/firefox/addon/toggle-restricted-jira-comment/
 
 ## Live demo
