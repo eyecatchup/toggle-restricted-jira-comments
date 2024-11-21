@@ -1,7 +1,9 @@
-const commentButtonNodeSelector =  'button[data-testid="issue-activity-feed.ui.buttons.Comments"]'
-const commentsNodeSelector = 'div[data-testid="issue.activity.comments-list"]'
-const loadMoreButtonSelector = 'button[data-testid="issue.activity.common.component.load-more-button.loading-button"]'
-const internalCommentIconSelector = 'span[data-vc="icon-undefined"]:not([role="img"]'
+const SELECTORS = {
+    commentsNode: 'div[data-testid="issue.activity.comments-list"]',
+    commentButtonNode: 'button[data-testid="issue-activity-feed.ui.buttons.Comments"]',
+    loadMoreButton: 'button[data-testid="issue.activity.common.component.load-more-button.loading-button"]',
+    internalCommentIcon: 'span[data-vc="icon-undefined"]:not([role="img"]'
+}
 
 let hideInternalComments = false
 
@@ -43,6 +45,10 @@ function initCSS() {
             button.toggle:hover {
                 background-color: rgba(9, 30, 66, 0.14);
             }
+            button.toggle.active {
+                background-color: rgb(233, 242, 255);
+                color: rgb(12, 102, 228) !important;
+            }
             button.toggle span {
                 opacity: 1;
                 transition: opacity 0.3s;
@@ -64,36 +70,38 @@ function initCSS() {
 // Observe the DOM for the comments node to appear
 function observeDOMForComments() {
     const observer = new MutationObserver((mutationsList, observer) => {
-        const commentsNode = document.querySelector(commentsNodeSelector)
-        if (commentsNode) {
+        if (document.querySelector(SELECTORS.commentsNode)) {
             setupUI()
             observeCommentsButton()
             observer.disconnect()
         }
-    });
+    })
     observer.observe(document.body, { childList: true, subtree: true })
 }
 
 // Observe the comments button in the activity feed 
 // in order to re-apply visitility of restricted comments and add click handlers
 function observeCommentsButton() {
-    const commentButtonNode = document.querySelector(commentButtonNodeSelector)
     const observer = new MutationObserver((mutationsList, observer) => {
         for (const mutation of mutationsList) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'aria-checked') {
-                if (mutation.target.getAttribute(mutation.attributeName) == 'true') {
-                    setTimeout(toggleClickHandler, 500)
-                    setTimeout(addClickHandlerToLoadMoreButton, 500)
-                }
+            if (
+                mutation.type === 'attributes' && 
+                mutation.attributeName === 'aria-checked' && 
+                mutation.target.getAttribute(mutation.attributeName) == 'true'
+            ) {
+                setTimeout(toggleClickHandler, 500)
+                setTimeout(addClickHandlerToLoadMoreButton, 500)
             }
         }
     })
-    observer.observe(commentButtonNode, { attributes: true, childList: true, subtree: true })
+    observer.observe(document.querySelector(SELECTORS.commentButtonNode), { 
+        attributes: true, childList: true, subtree: true 
+    })
 }
 
 // Add click handler to the "Load More" button
 function addClickHandlerToLoadMoreButton() {
-    const loadMoreBtn = document.querySelector(loadMoreButtonSelector)
+    const loadMoreBtn = document.querySelector(SELECTORS.loadMoreButton)
     if (loadMoreBtn) {
         loadMoreBtn.onclick = toggleClickHandler
     }
@@ -101,7 +109,7 @@ function addClickHandlerToLoadMoreButton() {
 
 // Add the "Toggle Internal Comments" button to the activity feed
 function addToggleInternalCommentsButton() {
-    const commentButtonNode = document.querySelector(commentButtonNodeSelector)
+    const commentButtonNode = document.querySelector(SELECTORS.commentButtonNode)
     if (!commentButtonNode) return
 
     const span = document.createElement('span')
@@ -118,32 +126,39 @@ function addToggleInternalCommentsButton() {
 
 // Toggle the visibility of internal comments
 function toggleInternalComments() {
-    const commentsNode = document.querySelector(commentsNodeSelector)
-    if (commentsNode) {
-        hideInternalComments = !hideInternalComments
-        try {
-            localStorage.setItem('hideRestrictedComments', hideInternalComments)
-        } catch (e) {
-            console.error('Failed to save setting to localStorage')
-        }
-        const span = document.querySelector('button.toggle > span')
-        if (span) {
-            span.innerText = `${!hideInternalComments ? 'Hide' : 'Show'} Restricted Comments`
-        }
-        const internalComments = commentsNode.querySelectorAll(internalCommentIconSelector)
-        internalComments.forEach(comment => {
-            const mainCommentNode = findCommentMainNode(comment)
-            if (mainCommentNode) {
-                mainCommentNode.classList.toggle('hidden-comment', hideInternalComments)
-            }
-        })
+    const commentsNode = document.querySelector(SELECTORS.commentsNode)
+    if (!commentsNode) return
+
+    hideInternalComments = !hideInternalComments
+
+    try {
+        localStorage.setItem('hideRestrictedComments', hideInternalComments)
+    } catch (e) { 
+        console.error('Failed to save setting to localStorage') 
     }
+
+    const span = document.querySelector('button.toggle > span')
+    if (span) {
+        span.innerText = `${!hideInternalComments ? 'Hide' : 'Show'} Restricted Comments`
+        span.parentElement.classList.toggle('active', hideInternalComments)
+    }
+
+    const internalComments = commentsNode.querySelectorAll(SELECTORS.internalCommentIcon)
+    internalComments.forEach(comment => {
+        const mainCommentNode = findCommentMainNode(comment)
+        if (mainCommentNode) {
+            mainCommentNode.classList.toggle('hidden-comment', hideInternalComments)
+        }
+    })
 }
 
 // Find (and return) the main comment node
 function findCommentMainNode(node) {
     while (node) {
-        if (node.hasAttribute && node.hasAttribute(`data-testid`) && node.getAttribute(`data-testid`).startsWith('comment-base-item-')) {
+        if (
+            node.hasAttribute && node.hasAttribute(`data-testid`) && 
+            node.getAttribute(`data-testid`).startsWith('comment-base-item-')
+        ) {
             return node.parentNode
         }
         node = node.parentNode
@@ -162,6 +177,7 @@ function toggleClickHandler() {
 function setupUI() {
     addToggleInternalCommentsButton()
     setTimeout(addClickHandlerToLoadMoreButton, 500)
+
     try {
         hideInternalComments = localStorage.getItem('hideRestrictedComments') !== 'true'
         toggleInternalComments()
@@ -172,7 +188,7 @@ function setupUI() {
 
 function init() {
     initCSS()
-    const commentsNode = document.querySelector(commentsNodeSelector)
+    const commentsNode = document.querySelector(SELECTORS.commentsNode)
     if (!commentsNode) {
         setTimeout(observeDOMForComments, 500)
     } else {
