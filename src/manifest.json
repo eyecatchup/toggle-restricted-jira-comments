@@ -1,6 +1,6 @@
 {
     "name": "Toggle restricted JIRA comments",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Toggle visibility of restricted JIRA comments. This allows to share your screen without sharing restricted information.",
     "homepage_url": "https://github.com/eyecatchup/toggle-restricted-jira-comments",
     "content_scripts": [
@@ -18,10 +18,5 @@
         "48": "jira-icon-filled-128.png",
         "128": "jira-icon-filled-128.png"
     },
-    "manifest_version": 3,
-    "browser_specific_settings": {
-        "gecko": {
-            "id": "jira-restricted-comments@eyecatchup"
-        }
-    }
+    "manifest_version": 3
 }

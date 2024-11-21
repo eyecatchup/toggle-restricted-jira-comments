@@ -121,6 +121,11 @@ function toggleInternalComments() {
     const commentsNode = document.querySelector(commentsNodeSelector)
     if (commentsNode) {
         hideInternalComments = !hideInternalComments
+        try {
+            localStorage.setItem('hideRestrictedComments', hideInternalComments)
+        } catch (e) {
+            console.error('Failed to save setting to localStorage')
+        }
         const span = document.querySelector('button.toggle > span')
         if (span) {
             span.innerText = `${!hideInternalComments ? 'Hide' : 'Show'} Restricted Comments`
@@ -157,6 +162,12 @@ function toggleClickHandler() {
 function setupUI() {
     addToggleInternalCommentsButton()
     setTimeout(addClickHandlerToLoadMoreButton, 500)
+    try {
+        hideInternalComments = localStorage.getItem('hideRestrictedComments') !== 'true'
+        toggleInternalComments()
+    } catch (e) {
+        console.error('Failed to load setting from localStorage')
+    }
 }
 
 function init() {
