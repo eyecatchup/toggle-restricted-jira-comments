@@ -115,21 +115,18 @@ function observeCommentsButton() {
 function observeUrl() {
     let url = location.href
 
-    const observer = new MutationObserver(() => {
+    const checkForUrlChange = () => {
         if (url !== location.href) {
             url = location.href
             setTimeout(observeDOMForComments, 100)
         }
-    })
+    }
+
+    const observer = new MutationObserver(checkForUrlChange)
     observer.observe(document.querySelector('title'), { childList: true })
 
     document.body.addEventListener('click', () => {
-        requestAnimationFrame(() => {
-            if (url !== location.href) {
-                url = location.href
-                setTimeout(observeDOMForComments, 100)
-            }
-        })
+        requestAnimationFrame(checkForUrlChange)
     }, true)
 }
 
