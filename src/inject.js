@@ -2,7 +2,8 @@ const SELECTORS = {
     commentsNode: 'div[data-testid="issue.activity.comments-list"]',
     commentButtonNode: 'button[data-testid="issue-activity-feed.ui.buttons.Comments"]',
     loadMoreButton: 'button[data-testid="issue.activity.common.component.load-more-button.loading-button"]',
-    internalCommentIcon: 'span[data-vc="icon-undefined"]:not([role="img"]'
+    internalCommentIcon: 'span[data-vc="icon-undefined"]:not([role="img"]',
+    activeSprintIssueDetailModal: 'div[data-component-selector="jira.issue-view.issue-details.modal-dialog-container"]'
 }
 
 let hideInternalComments = false
@@ -93,6 +94,9 @@ function observeDOMForComments() {
 // Observe the comments button in the activity feed 
 // in order to re-apply visitility of restricted comments and add click handlers
 function observeCommentsButton() {
+    const commentButtonNode = document.querySelector(SELECTORS.commentButtonNode)
+    if (!commentButtonNode) return
+
     const observer = new MutationObserver((mutationsList, observer) => {
         for (const mutation of mutationsList) {
             if (
@@ -105,9 +109,31 @@ function observeCommentsButton() {
             }
         }
     })
-    observer.observe(document.querySelector(SELECTORS.commentButtonNode), { 
+    observer.observe(commentButtonNode, { 
         attributes: true, childList: true, subtree: true 
     })
+}
+
+// Watch for URL changes and re-apply the DOM observer
+function observeUrl() {
+    let url = location.href
+
+    const observer = new MutationObserver(() => {
+        if (url !== location.href) {
+            url = location.href
+            setTimeout(observeDOMForComments, 100)
+        }
+    })
+    observer.observe(document.querySelector('title'), { childList: true })
+
+    document.body.addEventListener('click', () => {
+        requestAnimationFrame(() => {
+            if (url !== location.href) {
+                url = location.href
+                setTimeout(observeDOMForComments, 100)
+            }
+        })
+    }, true)
 }
 
 // Add click handler to the "Load More" button
@@ -121,7 +147,7 @@ function addClickHandlerToLoadMoreButton() {
 // Add the "Toggle Internal Comments" button to the activity feed
 function addToggleInternalCommentsButton() {
     const commentButtonNode = document.querySelector(SELECTORS.commentButtonNode)
-    if (!commentButtonNode) return
+    if (!commentButtonNode || document.querySelector('button.toggle')) return
 
     const span = document.createElement('span')
     span.innerText = `${!hideInternalComments ? 'Hide' : 'Show'} Restricted Comments`
@@ -202,6 +228,7 @@ function init() {
     } else {
         setupUI()
     }
+    observeUrl()
 }
 
 init()
