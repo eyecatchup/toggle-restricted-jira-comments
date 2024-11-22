@@ -1,12 +1,13 @@
 {
     "name": "Toggle restricted JIRA comments",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "Toggle visibility of restricted JIRA comments. This allows to share your screen without sharing restricted information.",
     "homepage_url": "https://github.com/eyecatchup/toggle-restricted-jira-comments",
     "content_scripts": [
         {
             "matches": [
-                "*://*.atlassian.net/browse/*"
+                "*://*.atlassian.net/browse/*",
+                "*://*.atlassian.net/jira/*"
             ],
             "run_at": "document_end",
             "js": [
