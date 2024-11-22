@@ -49,6 +49,17 @@ function initCSS() {
                 background-color: rgb(233, 242, 255);
                 color: rgb(12, 102, 228) !important;
             }
+            html[data-color-mode="dark"] button.toggle {
+                background-color: rgba(161, 189, 217, 0.08);
+                color: rgb(182, 194, 207) !important;
+            }
+            html[data-color-mode="dark"] button.toggle:hover {
+                background-color: rgba(166, 197, 226, 0.16);
+            }
+            html[data-color-mode="dark"] button.toggle.active {
+                background-color: rgb(28, 43, 65);
+                color: rgb(87, 157, 255) !important;
+            }
             button.toggle span {
                 opacity: 1;
                 transition: opacity 0.3s;
@@ -155,10 +166,7 @@ function toggleInternalComments() {
 // Find (and return) the main comment node
 function findCommentMainNode(node) {
     while (node) {
-        if (
-            node.hasAttribute && node.hasAttribute(`data-testid`) && 
-            node.getAttribute(`data-testid`).startsWith('comment-base-item-')
-        ) {
+        if (node?.getAttribute(`data-testid`)?.startsWith('comment-base-item-')) {
             return node.parentNode
         }
         node = node.parentNode
