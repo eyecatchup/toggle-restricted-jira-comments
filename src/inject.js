@@ -1,6 +1,16 @@
+// Override the console.log function to only log in development mode
+const DEVMODE = false
+const log = console.log
+console.log = function (...args) {
+    DEVMODE && log.apply(this, args)
+}
+
+//-- JIRA TOGGLE RESTRICTED COMMENTS --//
+
 const SELECTORS = {
     commentsNode: 'div[data-testid="issue.activity.comments-list"]',
     commentButtonNode: 'button[data-testid="issue-activity-feed.ui.buttons.Comments"]',
+    commentSelectNode: '[data-testid="issue-activity-feed.ui.dropdown.dropdown-menu-stateless--trigger"]',
     loadMoreButton: 'button[data-testid="issue.activity.common.component.load-more-button.loading-button"]',
     internalCommentIcon: 'span[data-vc="icon-undefined"]:not([role="img"]'
 }
@@ -81,9 +91,11 @@ function initCSS() {
 // Observe the DOM for the comments node to appear
 function observeDOMForComments() {
     const observer = new MutationObserver((mutationsList, observer) => {
-        if (document.querySelector(SELECTORS.commentsNode)) {
+        if (document.querySelector(SELECTORS.commentsNode) && (document.querySelector(SELECTORS.commentButtonNode) || document.querySelector(SELECTORS.commentSelectNode))) {
+            console.log('comments node found by observer, stopping observer')
             setupUI()
             observeCommentsButton()
+            observeCommentsSelect()
             observer.disconnect()
         }
     })
@@ -101,7 +113,8 @@ function observeCommentsButton() {
             if (
                 mutation.type === 'attributes' && 
                 mutation.attributeName === 'aria-checked' && 
-                mutation.target.getAttribute(mutation.attributeName) == 'true'
+                mutation.target.getAttribute(mutation.attributeName) == 'true' &&
+                document.querySelector(SELECTORS.commentsNode)
             ) {
                 setTimeout(toggleClickHandler, 500)
                 setTimeout(addClickHandlerToLoadMoreButton, 500)
@@ -111,14 +124,36 @@ function observeCommentsButton() {
     observer.observe(commentButtonNode, { attributes: true, childList: true, subtree: true })
 }
 
+// Observe the comments select input (backlog view) in the activity feed 
+// in order to re-apply visitility of restricted comments and add click handlers
+function observeCommentsSelect() {
+    const commentSelectNode = document.querySelector(SELECTORS.commentSelectNode)
+    if (!commentSelectNode) return
+
+    const observer = new MutationObserver((mutationsList, observer) => {
+        for (const mutation of mutationsList) {
+            if (mutation.attributeName === 'aria-label') {
+                setTimeout(() => {
+                    if (document.querySelector(SELECTORS.commentsNode)) {
+                        setTimeout(toggleClickHandler, 500)
+                        setTimeout(addClickHandlerToLoadMoreButton, 500)
+                    }
+                }, 500)     
+            }
+        }
+    })
+    observer.observe(commentSelectNode, { attributes: true })
+}
+
 // Watch for URL changes and re-apply the DOM observer
 function observeUrl() {
     let url = location.href
 
     const checkForUrlChange = () => {
         if (url !== location.href) {
+            console.log('url changed')
             url = location.href
-            setTimeout(observeDOMForComments, 100)
+            setTimeout(initUI, 100)
         }
     }
 
@@ -140,8 +175,15 @@ function addClickHandlerToLoadMoreButton() {
 
 // Add the "Toggle Internal Comments" button to the activity feed
 function addToggleInternalCommentsButton() {
-    const commentButtonNode = document.querySelector(SELECTORS.commentButtonNode)
-    if (!commentButtonNode || document.querySelector('button.toggle')) return
+    console.log('adding toggle button')
+    if (document.querySelector('button.toggle')) return
+
+    let commentButtonNode = document.querySelector(SELECTORS.commentButtonNode)
+    const commentSelectNode = document.querySelector(SELECTORS.commentSelectNode)
+    if (!commentButtonNode) {
+        if (!commentSelectNode) return
+        commentButtonNode = commentSelectNode
+    }
 
     const span = document.createElement('span')
     span.innerText = `${!hideInternalComments ? 'Hide' : 'Show'} Restricted Comments`
@@ -203,6 +245,7 @@ function toggleClickHandler() {
 }
 
 function setupUI() {
+    console.log('setting up UI')
     addToggleInternalCommentsButton()
     setTimeout(addClickHandlerToLoadMoreButton, 500)
 
@@ -214,14 +257,19 @@ function setupUI() {
     }
 }
 
-function init() {
-    initCSS()
+function initUI() {
     const commentsNode = document.querySelector(SELECTORS.commentsNode)
     if (!commentsNode) {
-        setTimeout(observeDOMForComments, 500)
+        console.log('comments node not found, starting observer')
+        setTimeout(observeDOMForComments, 50)
     } else {
         setupUI()
     }
+}
+
+function init() {
+    initCSS()
+    initUI()
     observeUrl()
 }
 
