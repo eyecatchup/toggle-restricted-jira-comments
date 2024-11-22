@@ -2,8 +2,7 @@ const SELECTORS = {
     commentsNode: 'div[data-testid="issue.activity.comments-list"]',
     commentButtonNode: 'button[data-testid="issue-activity-feed.ui.buttons.Comments"]',
     loadMoreButton: 'button[data-testid="issue.activity.common.component.load-more-button.loading-button"]',
-    internalCommentIcon: 'span[data-vc="icon-undefined"]:not([role="img"]',
-    activeSprintIssueDetailModal: 'div[data-component-selector="jira.issue-view.issue-details.modal-dialog-container"]'
+    internalCommentIcon: 'span[data-vc="icon-undefined"]:not([role="img"]'
 }
 
 let hideInternalComments = false
@@ -109,9 +108,7 @@ function observeCommentsButton() {
             }
         }
     })
-    observer.observe(commentButtonNode, { 
-        attributes: true, childList: true, subtree: true 
-    })
+    observer.observe(commentButtonNode, { attributes: true, childList: true, subtree: true })
 }
 
 // Watch for URL changes and re-apply the DOM observer
