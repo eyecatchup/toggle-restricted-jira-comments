@@ -5,6 +5,7 @@ console.log = (...args) => DEVMODE && log.apply(console, args)
 
 //-- JIRA TOGGLE RESTRICTED COMMENTS --//
 
+const qs = document.querySelector.bind(document)
 const SELECTORS = {
     commentsNode: 'div[data-testid="issue.activity.comments-list"]',
     commentButtonNode: 'button[data-testid="issue-activity-feed.ui.buttons.Comments"]',
@@ -17,7 +18,7 @@ let hideInternalComments = false
 
 // Inject CSS (so we don't rely on cryptic class names)
 function initCSS() {
-    let styleTag = document.querySelector('#toggle-internal-comments-style')
+    let styleTag = qs('#toggle-internal-comments-style')
     if (!styleTag) {
         styleTag = document.createElement('style')
         styleTag.id = 'toggle-internal-comments-style'
@@ -93,17 +94,8 @@ function observeNode(observeNode, observeAttrs, callback) {
 
 // Observe the DOM for the comments node to appear
 function observeDOMForComments() {
-    observeNode(document.body, { 
-        childList: true, 
-        subtree: true 
-    }, (mutationsList, observer) => {
-        if (
-            document.querySelector(SELECTORS.commentsNode) && 
-            (
-                document.querySelector(SELECTORS.commentButtonNode) || 
-                document.querySelector(SELECTORS.commentSelectNode)
-            )
-        ) {
+    observeNode(document.body, { childList: true, subtree: true }, (_, observer) => {
+        if (qs(SELECTORS.commentsNode) && (qs(SELECTORS.commentButtonNode) || qs(SELECTORS.commentSelectNode))) {
             console.log('comments node found by observer, stopping observer')
             setupUI()
             observeUIInteractions()
@@ -115,14 +107,16 @@ function observeDOMForComments() {
 // Observe the comments button and comments select input in the activity feed 
 // in order to re-apply visitility of restricted comments and add click handlers
 function observeUIInteractions() {
-    const setupUIObserver = (node, conditionCallback) => {
+    const setupUIObserver = (node, callbackCondition) => {
         observeNode(node, { attributes: true }, (mutationsList) => {
             for (const mutation of mutationsList) {
-                if (conditionCallback(mutation)) {
+                if (callbackCondition(mutation)) {
                     setTimeout(() => {
-                        if (document.querySelector(SELECTORS.commentsNode)) {
-                            setTimeout(toggleClickHandler, 500)
-                            setTimeout(addClickHandlerToLoadMoreButton, 500)
+                        if (qs(SELECTORS.commentsNode)) {
+                            setTimeout(() => {
+                                toggleClickHandler()
+                                addClickHandlerToLoadMoreButton()
+                            }, 500)
                         }
                     }, 500)
                 }
@@ -130,14 +124,12 @@ function observeUIInteractions() {
         })
     }
 
-    setupUIObserver(document.querySelector(SELECTORS.commentButtonNode), 
-        (mutation) => 
-            mutation.type === 'attributes' &&
-            mutation.attributeName === 'aria-checked' &&
+    setupUIObserver(qs(SELECTORS.commentButtonNode), 
+        (mutation) => mutation.attributeName === 'aria-checked' &&
             mutation.target.getAttribute(mutation.attributeName) == 'true'
     )
 
-    setupUIObserver(document.querySelector(SELECTORS.commentSelectNode), 
+    setupUIObserver(qs(SELECTORS.commentSelectNode), 
         (mutation) => mutation.attributeName === 'aria-label'
     )
 }
@@ -154,13 +146,13 @@ function observeUrl() {
         }
     }
 
-    observeNode(document.querySelector('title'), { childList: true }, checkForUrlChange)
+    observeNode(qs('title'), { childList: true }, checkForUrlChange)
     document.body.addEventListener('click', () => requestAnimationFrame(checkForUrlChange), true)
 }
 
 // Add click handler to the "Load More" button
 function addClickHandlerToLoadMoreButton() {
-    const loadMoreBtn = document.querySelector(SELECTORS.loadMoreButton)
+    const loadMoreBtn = qs(SELECTORS.loadMoreButton)
     if (loadMoreBtn) {
         loadMoreBtn.onclick = toggleClickHandler
     }
@@ -169,27 +161,27 @@ function addClickHandlerToLoadMoreButton() {
 // Add the "Toggle Internal Comments" button to the activity feed
 function addToggleInternalCommentsButton() {
     console.log('adding toggle button')
-    if (document.querySelector('button.toggle')) return
+    if (qs('button.toggle')) return
 
-    const commentButtonNode = document.querySelector(SELECTORS.commentButtonNode) || 
-                                document.querySelector(SELECTORS.commentSelectNode)
-    if (!commentButtonNode) return
+    const targetNode = qs(SELECTORS.commentButtonNode) || qs(SELECTORS.commentSelectNode)
+    if (!targetNode) return
 
-    const span = document.createElement('span')
-    span.innerText = `${!hideInternalComments ? 'Hide' : 'Show'} Restricted Comments`
     const button = document.createElement('button')
     button.role = 'menuitemradio'
     button.className = 'toggle'
-    button.appendChild(span)
     button.onclick = toggleInternalComments
 
-    commentButtonNode.parentNode.insertBefore(button, commentButtonNode.nextSibling)
-    commentButtonNode.onclick = toggleClickHandler
+    const span = document.createElement('span')
+    span.innerText = `${!hideInternalComments ? 'Hide' : 'Show'} Restricted Comments`
+    button.appendChild(span)
+
+    targetNode.parentNode.insertBefore(button, targetNode.nextSibling)
+    targetNode.onclick = toggleClickHandler
 }
 
 // Toggle the visibility of internal comments
 function toggleInternalComments() {
-    const commentsNode = document.querySelector(SELECTORS.commentsNode)
+    const commentsNode = qs(SELECTORS.commentsNode)
     if (!commentsNode) return
 
     hideInternalComments = !hideInternalComments
@@ -200,7 +192,7 @@ function toggleInternalComments() {
         console.error('Failed to save setting to localStorage') 
     }
 
-    const span = document.querySelector('button.toggle > span')
+    const span = qs('button.toggle > span')
     if (span) {
         span.innerText = `${!hideInternalComments ? 'Hide' : 'Show'} Restricted Comments`
         span.parentElement.classList.toggle('active', hideInternalComments)
@@ -248,7 +240,7 @@ function setupUI() {
 }
 
 function initUI() {
-    const commentsNode = document.querySelector(SELECTORS.commentsNode)
+    const commentsNode = qs(SELECTORS.commentsNode)
     if (!commentsNode) {
         console.log('comments node not found, starting observer')
         setTimeout(observeDOMForComments, 50)
