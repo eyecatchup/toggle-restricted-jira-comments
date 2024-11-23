@@ -115,38 +115,31 @@ function observeDOMForComments() {
 // Observe the comments button and comments select input in the activity feed 
 // in order to re-apply visitility of restricted comments and add click handlers
 function observeUIInteractions() {
-    observeNode(document.querySelector(SELECTORS.commentButtonNode), { 
-        attributes: true, 
-        childList: true, 
-        subtree: true 
-    }, (mutationsList) => {
-        for (const mutation of mutationsList) {
-            if (
-                mutation.type === 'attributes' &&
-                mutation.attributeName === 'aria-checked' &&
-                mutation.target.getAttribute(mutation.attributeName) == 'true' &&
-                document.querySelector(SELECTORS.commentsNode)
-            ) {
-                setTimeout(toggleClickHandler, 500)
-                setTimeout(addClickHandlerToLoadMoreButton, 500)
+    const setupUIObserver = (node, conditionCallback) => {
+        observeNode(node, { attributes: true }, (mutationsList) => {
+            for (const mutation of mutationsList) {
+                if (conditionCallback(mutation)) {
+                    setTimeout(() => {
+                        if (document.querySelector(SELECTORS.commentsNode)) {
+                            setTimeout(toggleClickHandler, 500)
+                            setTimeout(addClickHandlerToLoadMoreButton, 500)
+                        }
+                    }, 500)
+                }
             }
-        }
-    })
+        })
+    }
 
-    observeNode(document.querySelector(SELECTORS.commentSelectNode), {
-        attributes: true
-    }, (mutationsList) => {
-        for (const mutation of mutationsList) {
-            if (mutation.attributeName === 'aria-label') {
-                setTimeout(() => {
-                    if (document.querySelector(SELECTORS.commentsNode)) {
-                        setTimeout(toggleClickHandler, 500)
-                        setTimeout(addClickHandlerToLoadMoreButton, 500)
-                    }
-                }, 500)
-            }
-        }
-    })
+    setupUIObserver(document.querySelector(SELECTORS.commentButtonNode), 
+        (mutation) => 
+            mutation.type === 'attributes' &&
+            mutation.attributeName === 'aria-checked' &&
+            mutation.target.getAttribute(mutation.attributeName) == 'true'
+    )
+
+    setupUIObserver(document.querySelector(SELECTORS.commentSelectNode), 
+        (mutation) => mutation.attributeName === 'aria-label'
+    )
 }
 
 // Watch for URL changes and re-apply the DOM observer
