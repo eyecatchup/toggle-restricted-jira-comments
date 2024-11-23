@@ -11,17 +11,17 @@ const SELECTORS = {
     commentButtonNode: 'button[data-testid="issue-activity-feed.ui.buttons.Comments"]',
     commentSelectNode: '[data-testid="issue-activity-feed.ui.dropdown.dropdown-menu-stateless--trigger"]',
     loadMoreButton: 'button[data-testid="issue.activity.common.component.load-more-button.loading-button"]',
-    internalCommentIcon: 'span[data-vc="icon-undefined"]:not([role="img"]) > svg[role="presentation"]'
+    restrictedCommentIcon: 'span[data-vc="icon-undefined"]:not([role="img"]) > svg[role="presentation"]'
 }
 
-let hideInternalComments = false
+let hideRestrictedComments = false
 
-// Inject CSS (so we don't rely on cryptic class names)
-function initCSS() {
-    let styleTag = qs('#toggle-internal-comments-style')
+// Inject required CSS
+function injectCSS() {
+    let styleTag = qs('#toggle-restricted-comments-style')
     if (!styleTag) {
         styleTag = document.createElement('style')
-        styleTag.id = 'toggle-internal-comments-style'
+        styleTag.id = 'toggle-restricted-comments-style'
         document.head.appendChild(styleTag)
         styleTag.textContent = `
             button.toggle {
@@ -87,9 +87,9 @@ function initCSS() {
     }
 }
 
-function observeNode(observeNode, observeAttrs, callback) {
-    if (!observeNode) return
-    new MutationObserver(callback).observe(observeNode, observeAttrs)
+function observeNode(target, options, callback) {
+    if (!target) return
+    new MutationObserver(callback).observe(target, options)
 }
 
 // Observe the DOM for the comments node to appear
@@ -104,12 +104,12 @@ function observeDOMForComments() {
     })
 }
 
-// Observe the comments button and comments select input in the activity feed 
-// in order to re-apply visitility of restricted comments and add click handlers
+// Observe the comments button and comments select input nodes in the activity feed 
+// to restore the visible state of restricted comments and reassign click handlers
 function observeUIInteractions() {
-    const setupUIObserver = (node, callbackCondition) => {
-        observeNode(node, { attributes: true }, (mutationsList) => {
-            for (const mutation of mutationsList) {
+    const setupUIObserver = (targetNode, callbackCondition) => {
+        observeNode(targetNode, { attributes: true }, (mutationRecords) => {
+            for (const mutation of mutationRecords) {
                 if (callbackCondition(mutation)) {
                     setTimeout(() => {
                         if (qs(SELECTORS.commentsNode)) {
@@ -134,7 +134,7 @@ function observeUIInteractions() {
     )
 }
 
-// Watch for URL changes and re-apply the DOM observer
+// Observe URL changes to reinitialize the DOM observer
 function observeUrl() {
     let url = location.href
 
@@ -158,8 +158,8 @@ function addClickHandlerToLoadMoreButton() {
     }
 }
 
-// Add the "Toggle Internal Comments" button to the activity feed
-function addToggleInternalCommentsButton() {
+// Add the "Toggle Restricted Comments" button to the activity feed
+function addToggleRestrictedCommentsButton() {
     console.log('adding toggle button')
     if (qs('button.toggle')) return
 
@@ -169,40 +169,40 @@ function addToggleInternalCommentsButton() {
     const button = document.createElement('button')
     button.role = 'menuitemradio'
     button.className = 'toggle'
-    button.onclick = toggleInternalComments
+    button.onclick = toggleRestrictedComments
 
     const span = document.createElement('span')
-    span.innerText = `${!hideInternalComments ? 'Hide' : 'Show'} Restricted Comments`
+    span.innerText = `${!hideRestrictedComments ? 'Hide' : 'Show'} Restricted Comments`
     button.appendChild(span)
 
     targetNode.parentNode.insertBefore(button, targetNode.nextSibling)
     targetNode.onclick = toggleClickHandler
 }
 
-// Toggle the visibility of internal comments
-function toggleInternalComments() {
+// Toggle the visibility of restricted comments
+function toggleRestrictedComments() {
     const commentsNode = qs(SELECTORS.commentsNode)
     if (!commentsNode) return
 
-    hideInternalComments = !hideInternalComments
+    hideRestrictedComments = !hideRestrictedComments
 
     try {
-        localStorage.setItem('hideRestrictedComments', hideInternalComments)
+        localStorage.setItem('hideRestrictedComments', hideRestrictedComments)
     } catch (e) { 
         console.error('Failed to save setting to localStorage') 
     }
 
     const span = qs('button.toggle > span')
     if (span) {
-        span.innerText = `${!hideInternalComments ? 'Hide' : 'Show'} Restricted Comments`
-        span.parentElement.classList.toggle('active', hideInternalComments)
+        span.innerText = `${!hideRestrictedComments ? 'Hide' : 'Show'} Restricted Comments`
+        span.parentElement.classList.toggle('active', hideRestrictedComments)
     }
 
-    const internalComments = commentsNode.querySelectorAll(SELECTORS.internalCommentIcon)
-    internalComments.forEach(comment => {
+    const restrictedComments = commentsNode.querySelectorAll(SELECTORS.restrictedCommentIcon)
+    restrictedComments.forEach(comment => {
         const mainCommentNode = findCommentMainNode(comment)
         if (mainCommentNode) {
-            mainCommentNode.classList.toggle('hidden-comment', hideInternalComments)
+            mainCommentNode.classList.toggle('hidden-comment', hideRestrictedComments)
         }
     })
 }
@@ -220,20 +220,20 @@ function findCommentMainNode(node) {
 }
 
 function toggleClickHandler() {
-    if (hideInternalComments) {
-        setTimeout(toggleInternalComments, 500)
-        setTimeout(toggleInternalComments, 505)
+    if (hideRestrictedComments) {
+        setTimeout(toggleRestrictedComments, 500)
+        setTimeout(toggleRestrictedComments, 505)
     }  
 }
 
 function setupUI() {
     console.log('setting up UI')
-    addToggleInternalCommentsButton()
+    addToggleRestrictedCommentsButton()
     setTimeout(addClickHandlerToLoadMoreButton, 500)
 
     try {
-        hideInternalComments = localStorage.getItem('hideRestrictedComments') !== 'true'
-        toggleInternalComments()
+        hideRestrictedComments = localStorage.getItem('hideRestrictedComments') !== 'true'
+        toggleRestrictedComments()
     } catch (e) {
         console.error('Failed to load setting from localStorage')
     }
@@ -250,7 +250,7 @@ function initUI() {
 }
 
 function init() {
-    initCSS()
+    injectCSS()
     initUI()
     observeUrl()
 }
