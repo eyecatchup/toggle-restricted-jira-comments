@@ -19,6 +19,10 @@ This allows to share your screen without sharing restricted / sensitive informat
 
 <img src="./toggle-comments-short.gif" />
 
+## Legal info
+
+JIRA is a trademark of ATLASSIAN PTY LTD. The author of the software is not a partner, affiliate, or licensee of ATLASSIAN PTY LTD. or its employees, nor is the software in any other way formally associated with or legitimized by ATLASSIAN PTY LTD.
+
 ## License
 
 MIT, http://eyecatchup.mit-license.org
