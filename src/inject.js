@@ -1,9 +1,7 @@
 // Override the console.log function to only log in development mode
 const DEVMODE = false
 const log = console.log
-console.log = function (...args) {
-    DEVMODE && log.apply(this, args)
-}
+console.log = (...args) => DEVMODE && log.apply(console, args)
 
 //-- JIRA TOGGLE RESTRICTED COMMENTS --//
 
@@ -12,7 +10,7 @@ const SELECTORS = {
     commentButtonNode: 'button[data-testid="issue-activity-feed.ui.buttons.Comments"]',
     commentSelectNode: '[data-testid="issue-activity-feed.ui.dropdown.dropdown-menu-stateless--trigger"]',
     loadMoreButton: 'button[data-testid="issue.activity.common.component.load-more-button.loading-button"]',
-    internalCommentIcon: 'span[data-vc="icon-undefined"]:not([role="img"]'
+    internalCommentIcon: 'span[data-vc="icon-undefined"]:not([role="img"]) > svg[role="presentation"]'
 }
 
 let hideInternalComments = false
@@ -90,8 +88,7 @@ function initCSS() {
 
 function observeNode(observeNode, observeAttrs, callback) {
     if (!observeNode) return
-    const observer = new MutationObserver(callback)
-    observer.observe(observeNode, observeAttrs)
+    new MutationObserver(callback).observe(observeNode, observeAttrs)
 }
 
 // Observe the DOM for the comments node to appear
@@ -109,16 +106,15 @@ function observeDOMForComments() {
         ) {
             console.log('comments node found by observer, stopping observer')
             setupUI()
-            observeCommentsButton()
-            observeCommentsSelect()
+            observeUIInteractions()
             observer.disconnect()
         }
     })
 }
 
-// Observe the comments button in the activity feed 
+// Observe the comments button and comments select input in the activity feed 
 // in order to re-apply visitility of restricted comments and add click handlers
-function observeCommentsButton() {
+function observeUIInteractions() {
     observeNode(document.querySelector(SELECTORS.commentButtonNode), { 
         attributes: true, 
         childList: true, 
@@ -136,11 +132,7 @@ function observeCommentsButton() {
             }
         }
     })
-}
 
-// Observe the comments select input (backlog view) in the activity feed 
-// in order to re-apply visitility of restricted comments and add click handlers
-function observeCommentsSelect() {
     observeNode(document.querySelector(SELECTORS.commentSelectNode), {
         attributes: true
     }, (mutationsList) => {
@@ -170,10 +162,7 @@ function observeUrl() {
     }
 
     observeNode(document.querySelector('title'), { childList: true }, checkForUrlChange)
-
-    document.body.addEventListener('click', () => {
-        requestAnimationFrame(checkForUrlChange)
-    }, true)
+    document.body.addEventListener('click', () => requestAnimationFrame(checkForUrlChange), true)
 }
 
 // Add click handler to the "Load More" button
@@ -189,12 +178,9 @@ function addToggleInternalCommentsButton() {
     console.log('adding toggle button')
     if (document.querySelector('button.toggle')) return
 
-    let commentButtonNode = document.querySelector(SELECTORS.commentButtonNode)
-    const commentSelectNode = document.querySelector(SELECTORS.commentSelectNode)
-    if (!commentButtonNode) {
-        if (!commentSelectNode) return
-        commentButtonNode = commentSelectNode
-    }
+    const commentButtonNode = document.querySelector(SELECTORS.commentButtonNode) || 
+                                document.querySelector(SELECTORS.commentSelectNode)
+    if (!commentButtonNode) return
 
     const span = document.createElement('span')
     span.innerText = `${!hideInternalComments ? 'Hide' : 'Show'} Restricted Comments`
