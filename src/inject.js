@@ -88,10 +88,25 @@ function initCSS() {
     }
 }
 
+function observeNode(observeNode, observeAttrs, callback) {
+    if (!observeNode) return
+    const observer = new MutationObserver(callback)
+    observer.observe(observeNode, observeAttrs)
+}
+
 // Observe the DOM for the comments node to appear
 function observeDOMForComments() {
-    const observer = new MutationObserver((mutationsList, observer) => {
-        if (document.querySelector(SELECTORS.commentsNode) && (document.querySelector(SELECTORS.commentButtonNode) || document.querySelector(SELECTORS.commentSelectNode))) {
+    observeNode(document.body, { 
+        childList: true, 
+        subtree: true 
+    }, (mutationsList, observer) => {
+        if (
+            document.querySelector(SELECTORS.commentsNode) && 
+            (
+                document.querySelector(SELECTORS.commentButtonNode) || 
+                document.querySelector(SELECTORS.commentSelectNode)
+            )
+        ) {
             console.log('comments node found by observer, stopping observer')
             setupUI()
             observeCommentsButton()
@@ -99,20 +114,20 @@ function observeDOMForComments() {
             observer.disconnect()
         }
     })
-    observer.observe(document.body, { childList: true, subtree: true })
 }
 
 // Observe the comments button in the activity feed 
 // in order to re-apply visitility of restricted comments and add click handlers
 function observeCommentsButton() {
-    const commentButtonNode = document.querySelector(SELECTORS.commentButtonNode)
-    if (!commentButtonNode) return
-
-    const observer = new MutationObserver((mutationsList, observer) => {
+    observeNode(document.querySelector(SELECTORS.commentButtonNode), { 
+        attributes: true, 
+        childList: true, 
+        subtree: true 
+    }, (mutationsList) => {
         for (const mutation of mutationsList) {
             if (
-                mutation.type === 'attributes' && 
-                mutation.attributeName === 'aria-checked' && 
+                mutation.type === 'attributes' &&
+                mutation.attributeName === 'aria-checked' &&
                 mutation.target.getAttribute(mutation.attributeName) == 'true' &&
                 document.querySelector(SELECTORS.commentsNode)
             ) {
@@ -121,16 +136,14 @@ function observeCommentsButton() {
             }
         }
     })
-    observer.observe(commentButtonNode, { attributes: true, childList: true, subtree: true })
 }
 
 // Observe the comments select input (backlog view) in the activity feed 
 // in order to re-apply visitility of restricted comments and add click handlers
 function observeCommentsSelect() {
-    const commentSelectNode = document.querySelector(SELECTORS.commentSelectNode)
-    if (!commentSelectNode) return
-
-    const observer = new MutationObserver((mutationsList, observer) => {
+    observeNode(document.querySelector(SELECTORS.commentSelectNode), {
+        attributes: true
+    }, (mutationsList) => {
         for (const mutation of mutationsList) {
             if (mutation.attributeName === 'aria-label') {
                 setTimeout(() => {
@@ -138,11 +151,10 @@ function observeCommentsSelect() {
                         setTimeout(toggleClickHandler, 500)
                         setTimeout(addClickHandlerToLoadMoreButton, 500)
                     }
-                }, 500)     
+                }, 500)
             }
         }
     })
-    observer.observe(commentSelectNode, { attributes: true })
 }
 
 // Watch for URL changes and re-apply the DOM observer
@@ -157,8 +169,7 @@ function observeUrl() {
         }
     }
 
-    const observer = new MutationObserver(checkForUrlChange)
-    observer.observe(document.querySelector('title'), { childList: true })
+    observeNode(document.querySelector('title'), { childList: true }, checkForUrlChange)
 
     document.body.addEventListener('click', () => {
         requestAnimationFrame(checkForUrlChange)
