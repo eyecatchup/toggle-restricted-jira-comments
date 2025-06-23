@@ -108,6 +108,8 @@ function observeDOMForComments() {
 // to restore the visible state of restricted comments and reassign click handlers
 function observeUIInteractions() {
     const setupUIObserver = (targetNode, callbackCondition) => {
+        console.log('setting up UI observer for', targetNode)
+        if (!targetNode) return
         observeNode(targetNode, { attributes: true }, (mutationRecords) => {
             for (const mutation of mutationRecords) {
                 if (callbackCondition(mutation)) {
@@ -255,4 +257,4 @@ function init() {
     observeUrl()
 }
 
-init()
+setTimeout(init, 500)
