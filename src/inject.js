@@ -11,7 +11,7 @@ const SELECTORS = {
     commentButtonNode: 'button[data-testid="issue-activity-feed.ui.buttons.Comments"]',
     commentSelectNode: '[data-testid="issue-activity-feed.ui.dropdown.dropdown-menu-stateless--trigger"]',
     loadMoreButton: 'button[data-testid="issue.activity.common.component.load-more-button.loading-button"]',
-    restrictedCommentIcon: 'span[data-vc="icon-undefined"]:not([role="img"]) > svg[role="presentation"]'
+    restrictedCommentIcon: '[data-testid="issue-comment-base.ui.comment.custom-comment.restricted-to"] svg[role="presentation"]'
 }
 
 let hideRestrictedComments = false
